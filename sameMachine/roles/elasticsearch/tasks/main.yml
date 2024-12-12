@@ -73,9 +73,9 @@
     remote_src: yes
 
 - name: Customize configuration for second node
-  blockinfile:
-    path: /etc/elasticsearch-node2/elasticsearch.yml
-    block: |
+  copy:
+    dest: /etc/elasticsearch-node2/elasticsearch.yml
+    content: |
       cluster.name: {{ cluster_name }}
       node.name: {{ node_name_2 }}
       path.data: /var/lib/elasticsearch-node2
@@ -159,9 +159,9 @@
     remote_src: yes
 
 - name: Customize configuration for third node
-  blockinfile:
-    path: /etc/elasticsearch-node3/elasticsearch.yml
-    block: |
+  copy:
+    dest: /etc/elasticsearch-node3/elasticsearch.yml
+    content: |
       cluster.name: {{ cluster_name }}
       node.name: {{ node_name_3 }}
       path.data: /var/lib/elasticsearch-node3
