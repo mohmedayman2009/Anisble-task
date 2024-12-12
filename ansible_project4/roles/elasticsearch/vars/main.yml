@@ -1,0 +1,31 @@
+# roles/elasticsearch/vars/main.yml
+
+elasticsearch_version: 8.16.1
+elasticsearch_deb_url: "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ elasticsearch_version }}-amd64.deb"
+elasticsearch_deb_sha512_url: "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ elasticsearch_version }}-amd64.deb.sha512"
+elasticsearch_deb_file: "elasticsearch-{{ elasticsearch_version }}-amd64.deb"
+
+# Cluster-specific variables
+cluster_name: my-cluster
+discovery_seed_hosts:
+  - "127.0.0.1:9300"  # First node's transport port
+  - "127.0.0.1:9301"  # Second node's transport port
+  - "127.0.0.1:9302"  # Third node's transport port
+
+# Node 1
+node_name_1: node-1
+network_host_1: 0.0.0.0
+http_port_1: 9200
+transport_port_1: 9300
+
+# Node 2
+node_name_2: node-2
+network_host_2: 0.0.0.0
+http_port_2: 9201
+transport_port_2: 9301
+
+# Node 3
+node_name_3: node-3
+network_host_3: 0.0.0.0
+http_port_3: 9202
+transport_port_3: 9302

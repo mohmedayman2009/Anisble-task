@@ -1,0 +1,111 @@
+# roles/elasticsearch/tasks/main.yml
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Check if Elasticsearch package already exists
+  stat:
+    path: "/tmp/{{ elasticsearch_deb_file }}"
+  register: deb_file_stat
+
+- name: Download Elasticsearch package if not present
+  get_url:
+    url: "{{ elasticsearch_deb_url }}"
+    dest: "/tmp/{{ elasticsearch_deb_file }}"
+  when: not deb_file_stat.stat.exists
+
+- name: Download SHA512 checksum file
+  get_url:
+    url: "{{ elasticsearch_deb_sha512_url }}"
+    dest: "/tmp/{{ elasticsearch_deb_file }}.sha512"
+
+- name: Verify SHA512 checksum
+  command: "shasum -a 512 -c /tmp/{{ elasticsearch_deb_file }}.sha512"
+  args:
+    chdir: /tmp/
+  register: sha512_check
+  failed_when: "'OK' not in sha512_check.stdout"
+
+- name: Install Elasticsearch
+  apt:
+    deb: "/tmp/{{ elasticsearch_deb_file }}"
+    state: present
+
+- name: Configure Elasticsearch for Node 1
+  copy:
+    content: |
+      # Elasticsearch configuration for Node 1
+      cluster.name: {{ elasticsearch_node1_config.cluster_name }}
+      node.name: {{ elasticsearch_node1_config.node_name }}
+      discovery.seed_hosts:
+      {% for host in elasticsearch_node1_config.discovery_seed_hosts %}
+        - {{ host }}
+      {% endfor %}
+      cluster.initial_master_nodes:
+      {% for node in elasticsearch_node1_config.cluster_initial_master_nodes %}
+        - {{ node }}
+      {% endfor %}
+      network.host: {{ elasticsearch_node1_config.network_host }}
+      http.port: {{ elasticsearch_node1_config.http_port }}
+      transport.tcp.port: {{ elasticsearch_node1_config.transport_tcp_port }}
+    dest: /etc/elasticsearch/elasticsearch.yml
+    owner: elasticsearch
+    group: elasticsearch
+    mode: '0644'
+  notify: Restart Elasticsearch
+  when: inventory_hostname == "node1"
+
+- name: Configure Elasticsearch for Node 2
+  copy:
+    content: |
+      # Elasticsearch configuration for Node 2
+      cluster.name: {{ elasticsearch_node2_config.cluster_name }}
+      node.name: {{ elasticsearch_node2_config.node_name }}
+      discovery.seed_hosts:
+      {% for host in elasticsearch_node2_config.discovery_seed_hosts %}
+        - {{ host }}
+      {% endfor %}
+      cluster.initial_master_nodes:
+      {% for node in elasticsearch_node2_config.cluster_initial_master_nodes %}
+        - {{ node }}
+      {% endfor %}
+      network.host: {{ elasticsearch_node2_config.network_host }}
+      http.port: {{ elasticsearch_node2_config.http_port }}
+      transport.tcp.port: {{ elasticsearch_node2_config.transport_tcp_port }}
+    dest: /etc/elasticsearch/elasticsearch.yml
+    owner: elasticsearch
+    group: elasticsearch
+    mode: '0644'
+  notify: Restart Elasticsearch
+  when: inventory_hostname == "node2"
+
+- name: Configure Elasticsearch for Node 3
+  copy:
+    content: |
+      # Elasticsearch configuration for Node 3
+      cluster.name: {{ elasticsearch_node3_config.cluster_name }}
+      node.name: {{ elasticsearch_node3_config.node_name }}
+      discovery.seed_hosts:
+      {% for host in elasticsearch_node3_config.discovery_seed_hosts %}
+        - {{ host }}
+      {% endfor %}
+      cluster.initial_master_nodes:
+      {% for node in elasticsearch_node3_config.cluster_initial_master_nodes %}
+        - {{ node }}
+      {% endfor %}
+      network.host: {{ elasticsearch_node3_config.network_host }}
+      http.port: {{ elasticsearch_node3_config.http_port }}
+      transport.tcp.port: {{ elasticsearch_node3_config.transport_tcp_port }}
+    dest: /etc/elasticsearch/elasticsearch.yml
+    owner: elasticsearch
+    group: elasticsearch
+    mode: '0644'
+  notify: Restart Elasticsearch
+  when: inventory_hostname == "node3"
+
+- name: Ensure Elasticsearch is enabled and started
+  systemd:
+    name: elasticsearch
+    enabled: yes
+    state: started

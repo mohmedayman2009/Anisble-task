@@ -1,0 +1,6 @@
+# roles/elasticsearch/handlers/main.yml
+
+- name: Restart Elasticsearch
+  systemd:
+    name: elasticsearch
+    state: restarted

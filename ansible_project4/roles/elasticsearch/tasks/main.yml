@@ -1,0 +1,224 @@
+# roles/elasticsearch/tasks/main.yml
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Download Elasticsearch package
+  get_url:
+    url: "{{ elasticsearch_deb_url }}"
+    dest: "/tmp/{{ elasticsearch_deb_file }}"
+
+- name: Download SHA512 checksum file
+  get_url:
+    url: "{{ elasticsearch_deb_sha512_url }}"
+    dest: "/tmp/{{ elasticsearch_deb_file }}.sha512"
+
+- name: Verify SHA512 checksum
+  command: "shasum -a 512 -c /tmp/{{ elasticsearch_deb_file }}.sha512"
+  args:
+    chdir: /tmp/
+  register: sha512_check
+  failed_when: "'OK' not in sha512_check.stdout"
+
+- name: Install Elasticsearch
+  apt:
+    deb: "/tmp/{{ elasticsearch_deb_file }}"
+    state: present
+
+# Configure the default Elasticsearch instance (node-1)
+- name: Set cluster name for default node
+  lineinfile:
+    path: /etc/elasticsearch/elasticsearch.yml
+    line: "cluster.name: {{ cluster_name }}"
+    state: present
+
+- name: Set node name for default node
+  lineinfile:
+    path: /etc/elasticsearch/elasticsearch.yml
+    line: "node.name: {{ node_name_1 }}"
+    state: present
+
+- name: Set discovery seed hosts for default node
+  lineinfile:
+    path: /etc/elasticsearch/elasticsearch.yml
+    line: "discovery.seed_hosts: [{{ discovery_seed_hosts | join(', ') }}]"
+    state: present
+
+- name: Set network host for default node
+  lineinfile:
+    path: /etc/elasticsearch/elasticsearch.yml
+    line: "network.host: {{ network_host_1 }}"
+    state: present
+
+- name: Set HTTP port for default node
+  lineinfile:
+    path: /etc/elasticsearch/elasticsearch.yml
+    line: "http.port: {{ http_port_1 }}"
+    state: present
+
+# Add a second node on the same VM
+- name: Create directory for second node
+  file:
+    path: "/etc/elasticsearch-node2"
+    state: directory
+    owner: elasticsearch
+    group: elasticsearch
+    mode: '0755'
+
+- name: Copy default configuration to second node directory
+  copy:
+    src: /etc/elasticsearch/
+    dest: /etc/elasticsearch-node2/
+    remote_src: yes
+
+- name: Customize configuration for second node
+  blockinfile:
+    path: /etc/elasticsearch-node2/elasticsearch.yml
+    block: |
+      cluster.name: {{ cluster_name }}
+      node.name: {{ node_name_2 }}
+      path.data: /var/lib/elasticsearch-node2
+      path.logs: /var/log/elasticsearch-node2
+      network.host: {{ network_host_2 }}
+      http.port: {{ http_port_2 }}
+      discovery.seed_hosts: [{{ discovery_seed_hosts | join(', ') }}]
+      transport.port: {{ transport_port_2 }}
+
+- name: Create data and log directories for second node
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: elasticsearch
+    group: elasticsearch
+    mode: '0755'
+  with_items:
+    - /var/lib/elasticsearch-node2
+    - /var/log/elasticsearch-node2
+
+- name: Ensure the directory exists for Elasticsearch node2 service
+  file:
+    path: /etc/systemd/system
+    state: directory
+    mode: '0755'
+
+- name: Create systemd override for second node
+  copy:
+    content: |
+      [Unit]
+      Description=Elasticsearch (Node 2)
+      Documentation=https://www.elastic.co
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      Environment=ES_PATH_CONF=/etc/elasticsearch-node2
+      Environment=ES_HOME=/usr/share/elasticsearch
+      Environment=ES_STARTUP_SLEEP_TIME=5
+      Environment=PID_DIR=/var/run/elasticsearch-node2
+      ExecStart=/usr/share/elasticsearch/bin/elasticsearch
+      User=elasticsearch
+      Group=elasticsearch
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+    dest: /etc/systemd/system/elasticsearch-node2.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Reload systemd for the new service
+  command: systemctl daemon-reload
+
+- name: Ensure Elasticsearch is enabled and started
+  systemd:
+    name: elasticsearch
+    enabled: yes
+    state: started
+
+- name: Start second Elasticsearch node
+  systemd:
+    name: elasticsearch-node2
+    enabled: yes
+    state: started
+
+# Add a third node on the same VM
+- name: Create directory for third node
+  file:
+    path: "/etc/elasticsearch-node3"
+    state: directory
+    owner: elasticsearch
+    group: elasticsearch
+    mode: '0755'
+
+- name: Copy default configuration to third node directory
+  copy:
+    src: /etc/elasticsearch/
+    dest: /etc/elasticsearch-node3/
+    remote_src: yes
+
+- name: Customize configuration for third node
+  blockinfile:
+    path: /etc/elasticsearch-node3/elasticsearch.yml
+    block: |
+      cluster.name: {{ cluster_name }}
+      node.name: {{ node_name_3 }}
+      path.data: /var/lib/elasticsearch-node3
+      path.logs: /var/log/elasticsearch-node3
+      network.host: {{ network_host_3 }}
+      http.port: {{ http_port_3 }}
+      discovery.seed_hosts: [{{ discovery_seed_hosts | join(', ') }}]
+      transport.port: {{ transport_port_3 }}
+
+- name: Create data and log directories for third node
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: elasticsearch
+    group: elasticsearch
+    mode: '0755'
+  with_items:
+    - /var/lib/elasticsearch-node3
+    - /var/log/elasticsearch-node3
+
+- name: Ensure the directory exists for Elasticsearch node3 service
+  file:
+    path: /etc/systemd/system
+    state: directory
+    mode: '0755'
+
+- name: Create systemd override for third node
+  copy:
+    content: |
+      [Unit]
+      Description=Elasticsearch (Node 3)
+      Documentation=https://www.elastic.co
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      Environment=ES_PATH_CONF=/etc/elasticsearch-node3
+      Environment=ES_HOME=/usr/share/elasticsearch
+      Environment=ES_STARTUP_SLEEP_TIME=5
+      Environment=PID_DIR=/var/run/elasticsearch-node3
+      ExecStart=/usr/share/elasticsearch/bin/elasticsearch
+      User=elasticsearch
+      Group=elasticsearch
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+    dest: /etc/systemd/system/elasticsearch-node3.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Reload systemd for the new service
+  command: systemctl daemon-reload
+
+- name: Start third Elasticsearch node
+  systemd:
+    name: elasticsearch-node3
+    enabled: yes
+    state: started

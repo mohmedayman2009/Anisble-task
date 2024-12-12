@@ -1,0 +1,9 @@
+# deploy.yml
+
+- name: Deploy Elasticsearch and Redis
+  hosts: ubuntu_servers
+  vars_files:
+    - secret.yml
+  roles:
+    - elasticsearch
+    - redis

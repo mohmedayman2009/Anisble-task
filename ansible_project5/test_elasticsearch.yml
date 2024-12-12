@@ -1,0 +1,8 @@
+# test_elasticsearch.yml
+
+- name: Test Elasticsearch Role
+  hosts: elasticsearch_cluster
+  vars_files:
+    - secret.yml
+  roles:
+    - elasticsearch

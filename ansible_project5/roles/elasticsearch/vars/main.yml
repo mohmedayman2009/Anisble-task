@@ -1,0 +1,36 @@
+# roles/elasticsearch/vars/main.yml
+
+elasticsearch_version: 8.16.1
+elasticsearch_deb_url: "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ elasticsearch_version }}-amd64.deb"
+elasticsearch_deb_sha512_url: "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ elasticsearch_version }}-amd64.deb.sha512"
+elasticsearch_deb_file: "elasticsearch-{{ elasticsearch_version }}-amd64.deb"
+
+# Configuration for Node 1
+elasticsearch_node1_config:
+  cluster_name: "cluster-node1"
+  node_name: "node-1"
+  discovery_seed_hosts: ["192.168.1.2", "192.168.1.3"]
+  cluster_initial_master_nodes: ["node-1"]
+  network_host: "192.168.1.1"
+  http_port: 9200
+  transport_tcp_port: 9300
+
+# Configuration for Node 2
+elasticsearch_node2_config:
+  cluster_name: "cluster-node2"
+  node_name: "node-2"
+  discovery_seed_hosts: ["192.168.1.1", "192.168.1.3"]
+  cluster_initial_master_nodes: ["node-2"]
+  network_host: "192.168.1.2"
+  http_port: 9201
+  transport_tcp_port: 9301
+
+# Configuration for Node 3
+elasticsearch_node3_config:
+  cluster_name: "cluster-node3"
+  node_name: "node-3"
+  discovery_seed_hosts: ["192.168.1.1", "192.168.1.2"]
+  cluster_initial_master_nodes: ["node-3"]
+  network_host: "192.168.1.3"
+  http_port: 9202
+  transport_tcp_port: 9302

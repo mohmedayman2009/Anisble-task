@@ -1,0 +1,15 @@
+# roles/redis/tasks/main.yml
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install Redis CLI tools
+  apt:
+    name: "{{ redis_tools_package }}"
+    state: present
+
+- name: Install Redis via Snap
+  snap:
+    name: "{{ redis_snap_name }}"
+    state: present

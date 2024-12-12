@@ -1,0 +1,8 @@
+# test_redis.yml
+
+- name: Test Redis Role
+  hosts: ubuntu_servers
+  vars_files:
+    - secret.yml
+  roles:
+    - redis

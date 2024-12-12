@@ -1,0 +1,4 @@
+# roles/redis/vars/main.yml
+
+redis_snap_name: "redis"
+redis_tools_package: "redis-tools"
